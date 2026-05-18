@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
 from google.adk.agents.llm_agent import Agent
-from google.adk.tools import google_search
-from .prompt.instruction import prompt
+from .prompt.root_instruction import root_instruction
+from .tools.save_user import save_user
+
+from .agents.python_tutor import python_agent
+from .agents.programming_agent import programming_agent
 
 root_agent = Agent(
     name='coding_tutor_agent',
     model='gemini-2.5-flash',
-    description='You are Mr.Brown, a coding tutor with the goal of teaching user programming',
-    instruction=prompt,
-    tools=[google_search]
-)
+    sub_agents=[python_agent, programming_agent],
+    description='You are Mr.Brown, the orchestrator with the role of directing the user to the correct tutor',
+    instruction=root_instruction,
+    tools=[save_user]
+    )
