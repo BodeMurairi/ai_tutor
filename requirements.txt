@@ -1,0 +1,9 @@
+google-adk[database]
+litellm
+python-dotenv
+google-cloud-storage
+pydantic[email]
+pydantic[standard]
+sqlalchemy[asyncio]>=2.0
+aiosqlite
+aiohttp
