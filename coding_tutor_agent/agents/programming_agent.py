@@ -3,6 +3,7 @@
 from google.adk.agents import Agent
 from ..prompt.other_programming_instruction import prompt
 from ..tools.save_user import update_session_tool
+from ..tools.search_docs import search_docs
 from ..callbacks import after_agent_callback
 
 programming_agent = Agent(
@@ -10,6 +11,6 @@ programming_agent = Agent(
     model="gemini-2.5-flash",
     description="Specialist for all programming languages except Python: JavaScript, Java, C++, Rust, Go, and others",
     instruction=prompt,
-    tools=[update_session_tool],
+    tools=[update_session_tool, search_docs],
     after_agent_callback=after_agent_callback
 )
