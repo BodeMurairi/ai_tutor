@@ -36,3 +36,6 @@ htmlcov/
 .tox/
 .nox/
 .coverage
+
+# Qdrant vector database storage
+qdrant_storage/
