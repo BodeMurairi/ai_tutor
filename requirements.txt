@@ -7,3 +7,10 @@ pydantic[standard]
 sqlalchemy[asyncio]>=2.0
 aiosqlite
 aiohttp
+haystack-ai
+qdrant-client
+qdrant-haystack
+google-ai-haystack
+markdown-it-py
+mdit_plain
+trafilatura

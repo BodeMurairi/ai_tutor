@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import UserModel, SessionModel
@@ -40,6 +40,17 @@ async def create_session(session: AsyncSession, session_data: Session) -> Sessio
     await session.commit()
     await session.refresh(new_session)
     return new_session
+
+
+async def get_last_session(session: AsyncSession, user_id: str) -> SessionModel | None:
+    """Get the most recent session for a user"""
+    result = await session.execute(
+        select(SessionModel)
+        .where(SessionModel.user_id == user_id)
+        .order_by(desc(SessionModel.started_at))
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
 
 
 async def update_session(session: AsyncSession, session_id: str, **kwargs) -> dict:

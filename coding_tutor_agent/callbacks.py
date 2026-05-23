@@ -5,10 +5,39 @@ from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
 
 from .memory.database import AsyncSessionLocal
-from .memory.repository import create_session, update_session
+from .memory.repository import create_session, update_session, get_last_session
 from .schema.session import Session, Intent
 
 logger = logging.getLogger(__name__)
+
+
+async def before_agent_callback(callback_context: CallbackContext) -> types.Content | None:
+    """
+    Runs before the root agent processes each message.
+    Once the user is identified, loads their last session context
+    from DB into state.
+    """
+    user_id = callback_context.state.get("user_id")
+
+    if not user_id:
+        return None
+
+    if callback_context.state.get("context_loaded"):
+        return None
+
+    try:
+        async with AsyncSessionLocal() as db:
+            last_session = await get_last_session(db, user_id)
+            if last_session:
+                callback_context.state["current_language"] = last_session.current_language
+                callback_context.state["current_intent"] = last_session.current_intent.value
+                callback_context.state["current_topic"] = last_session.current_topic
+                logger.info(f"[before_callback] Restored session context for user {user_id}")
+    except Exception as e:
+        logger.error(f"[before_callback] Failed to load session context: {e}")
+
+    callback_context.state["context_loaded"] = True
+    return None
 
 
 async def after_agent_callback(callback_context: CallbackContext) -> types.Content | None:
