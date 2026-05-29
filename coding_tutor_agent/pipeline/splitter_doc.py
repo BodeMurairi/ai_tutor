@@ -7,7 +7,7 @@ from .ingestion import convert_html_documents, convert_markdown_documents
 python_document = convert_html_documents()
 javascript, dart = convert_markdown_documents()
 
-# HTML-converted text uses single \n, not double \n, so word-based splitting works better
+# HTML-converted text uses single \n, so word-based splitting works better
 html_splitter = DocumentSplitter(split_by="word", split_length=200, split_overlap=20)
 
 # Markdown uses blank lines between paragraphs — passage splitting is appropriate
