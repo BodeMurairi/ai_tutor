@@ -13,11 +13,25 @@ from ..schema.session import Intent
 class Base(DeclarativeBase):
     pass
 
-
-class UserModel(Base):
-    __tablename__ = "users"
+class UserRegistration(Base):
+    __tablename__ = "usersRegister"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    first_name: Mapped[str] = mapped_column(String, nullable=False)
+    last_name: Mapped[str] = mapped_column(String, nullable=False)
+    username: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    email_address: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    api_key: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    profile: Mapped[Optional["UserModel"]] = relationship("UserModel", back_populates="registration", uselist=False)
+
+
+class UserModel(Base):
+    __tablename__ = "Learning"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String, ForeignKey("usersRegister.id"))
     name: Mapped[str] = mapped_column(String, nullable=False)
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     skill_level: Mapped[SkillLevel] = mapped_column(Enum(SkillLevel), default=SkillLevel.beginner)
@@ -26,6 +40,7 @@ class UserModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
+    registration: Mapped["UserRegistration"] = relationship("UserRegistration", back_populates="profile")
     sessions: Mapped[list["SessionModel"]] = relationship("SessionModel", back_populates="user")
 
 
@@ -33,7 +48,7 @@ class SessionModel(Base):
     __tablename__ = "sessions"
 
     session_id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[str] = mapped_column(String, ForeignKey("Learning.id"), nullable=False)
     username: Mapped[str] = mapped_column(String, nullable=False)
     current_language: Mapped[str] = mapped_column(String, nullable=False)
     current_intent: Mapped[Intent] = mapped_column(Enum(Intent), nullable=False)

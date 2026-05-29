@@ -14,11 +14,31 @@ def ask_chat(message: str, session_id: str = None):
     print(data.get("response", ""))
     return data
 
+def register_user():
+    payload = {
+        "first_name": "Bode",
+        "last_name": "Murairi",
+        "username": "bodemurairi",
+        "email_address": "b.murairi@alustudent.com"
+        }
+    response = requests.post(url=f"{BASE_URL}/auth/register", json=payload)
+    response.raise_for_status()
+    data = response.json()
+    print(data)
+    return data
+
+
+def login_user(username: str, api_key: str):
+    payload = {
+        "username": username,
+        "api_key": api_key
+        }
+    response = requests.post(url=f"{BASE_URL}/auth/login", json=payload)
+    response.raise_for_status()
+    data = response.json()
+    print(data)
+    return data
+
 
 if __name__ == "__main__":
-    result = ask_chat("Hello! I want to learn about Python")
-    session_id = result.get("session_id")
-
-    # Follow-up using the same session
-    ask_chat("What are Python data types?", session_id=session_id)
-    ask_chat()
+    login_user(username="bodemurairi", api_key="pkey-860f44bf-cae2-4202-b5be-3de1c2338ba9")

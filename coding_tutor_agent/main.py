@@ -2,6 +2,9 @@
 
 import uvicorn
 from uuid import uuid4
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent / ".env", override=True)
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -10,13 +13,23 @@ from .schema.session import ChatRequest, ChatResponse
 from .adk_runner import runner, session_service, APP_NAME
 from google.genai.types import Content, Part
 
+from .routers.auth import router as auth_router
+
+
 app = FastAPI()
+
+app.include_router(auth_router)
 
 
 @app.get("/")
 async def home():
+    """home"""
     return {"message": "Success"}
 
+@app.get("/health")
+async def health():
+    """returning health success"""
+    return {"status":"Running"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def ask_question(request: ChatRequest):
