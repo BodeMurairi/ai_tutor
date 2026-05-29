@@ -39,3 +39,4 @@ htmlcov/
 
 # Qdrant vector database storage
 qdrant_storage/
+*.db

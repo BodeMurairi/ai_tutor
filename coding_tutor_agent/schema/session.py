@@ -3,7 +3,7 @@
 from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel, Field
-
+from typing import Optional
 
 class Intent(str, Enum):
     learning = "learning"
@@ -20,3 +20,15 @@ class Session(BaseModel):
     current_intent: Intent = Field(..., description="User's current intent")
     current_topic: str = Field(..., description="Topic being explored")
     started_at: datetime = Field(default_factory=datetime.now, description="Session start time")
+
+class ChatRequest(BaseModel):
+    """Chat request"""
+    message: str
+    session_id: Optional[str] = None
+
+
+class ChatResponse(BaseModel):
+    """Chat response"""
+    response: str
+    session_id: str
+
