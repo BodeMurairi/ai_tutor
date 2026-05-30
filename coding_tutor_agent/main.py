@@ -1,16 +1,25 @@
 #!/usr/bin/env python3
 
 import uvicorn
-from uuid import uuid4
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent / ".env", override=True)
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
-from .schema.session import ChatRequest, ChatResponse
-from .adk_runner import runner, session_service, APP_NAME
-from google.genai.types import Content, Part
+from .routers.auth import router as auth_router
+from .routers.chat import router as chat_router
+from .services.rate_limiter import limiter, rate_limit_exceeded_handler
+
 
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+app.include_router(auth_router)
+app.include_router(chat_router)
 
 
 @app.get("/")
@@ -18,34 +27,9 @@ async def home():
     return {"message": "Success"}
 
 
-@app.post("/chat", response_model=ChatResponse)
-async def ask_question(request: ChatRequest):
-    session_id = request.session_id or str(uuid4())
-    user_id = session_id
-
-    session = await session_service.get_session(
-        app_name=APP_NAME,
-        user_id=user_id,
-        session_id=session_id
-    )
-
-    if not session:
-        await session_service.create_session(
-            app_name=APP_NAME,
-            user_id=user_id,
-            session_id=session_id
-        )
-
-    response_text = ""
-    async for event in runner.run_async(
-        user_id=user_id,
-        session_id=session_id,
-        new_message=Content(role="user", parts=[Part.from_text(text=request.message)])
-    ):
-        if event.is_final_response() and event.content and event.content.parts:
-            response_text = event.content.parts[0].text
-
-    return ChatResponse(response=response_text, session_id=session_id)
+@app.get("/health")
+async def health():
+    return {"status": "Running"}
 
 
 if __name__ == "__main__":
