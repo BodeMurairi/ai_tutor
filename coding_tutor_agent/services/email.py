@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 
-import os
 import smtplib
 import asyncio
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-logger = logging.getLogger(__name__)
+from ..config.config import SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
 
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 587
+logger = logging.getLogger(__name__)
 
 
 def _send(recipient_email: str, first_name: str, api_key: str) -> None:
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = (os.getenv("SMTP_PASSWORD") or "").replace(" ", "")
+    smtp_user = SMTP_USER
+    smtp_password = SMTP_PASSWORD
+    print(smtp_user)
+    print(smtp_password)
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Your NexVecta AI Tutor API Key"

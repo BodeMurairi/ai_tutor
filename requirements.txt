@@ -15,5 +15,6 @@ markdown-it-py
 mdit_plain
 trafilatura
 fastapi[standard]
+slowapi
 pydantic[standard]
 uvicorn[standard]

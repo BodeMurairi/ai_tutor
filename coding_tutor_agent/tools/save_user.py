@@ -2,36 +2,47 @@
 
 from google.adk.tools.tool_context import ToolContext
 from ..memory.database import AsyncSessionLocal
-from ..memory.repository import create_user, get_user_by_name
-from ..schema.user import User, SkillLevel
+from ..memory.repository import get_registration_by_username, get_username
+from ..memory.models import UserModel
 
 
-async def save_user(
-    name: str,
-    tool_context: ToolContext,
-    skill_level: str = "beginner",
-    preferred_language: str | None = None
-) -> dict:
+async def load_user(tool_context: ToolContext) -> dict:
     """
-    Save a new user to the database. If the user already exists, return their data.
-    Call this tool as soon as the user provides their name.
+    Load the authenticated user's data from the database into the session state.
+    Call this tool at the start of every conversation before doing anything else.
     """
+    username = tool_context.state.get("username")
+    if not username:
+        return {"status": "error", "message": "No authenticated user found in session."}
+
     async with AsyncSessionLocal() as session:
-        existing = await get_user_by_name(session, name)
-        if existing:
-            user_dict = User.model_validate(existing, from_attributes=True).model_dump(mode="json")
-        else:
-            user_data = User(
-                name=name,
-                skill_level=SkillLevel(skill_level),
-                preferred_language=preferred_language
-            )
-            new_user = await create_user(session, user_data)
-            user_dict = User.model_validate(new_user, from_attributes=True).model_dump(mode="json")
+        registration = await get_registration_by_username(session, username)
+        if not registration:
+            return {"status": "error", "message": f"User '{username}' not found."}
 
-    tool_context.state["user_id"] = user_dict["id"]
-    tool_context.state["username"] = user_dict["username"]
-    return user_dict
+        profile = await get_username(session, username)
+
+        if not profile:
+            profile = UserModel(
+                user_id=registration.id,
+                name=f"{registration.first_name} {registration.last_name}",
+                username=registration.username,
+            )
+            session.add(profile)
+            await session.commit()
+            await session.refresh(profile)
+
+    tool_context.state["user_id"] = profile.id
+    tool_context.state["api_key"] = registration.api_key
+    tool_context.state["first_name"] = registration.first_name
+
+    return {
+        "status": "success",
+        "user_id": profile.id,
+        "username": username,
+        "first_name": registration.first_name,
+        "api_key": registration.api_key,
+    }
 
 
 async def update_session_tool(
