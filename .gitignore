@@ -27,8 +27,9 @@ build/
 *.zip
 *.log
 *.bak
-.db
+*.db
 *.sqlite3
+test_*.py
 pytest_cache/
 .coverage
 .coverage.*
@@ -39,4 +40,3 @@ htmlcov/
 
 # Qdrant vector database storage
 qdrant_storage/
-6*.db
