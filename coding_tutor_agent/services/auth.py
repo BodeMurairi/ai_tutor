@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 import uuid
 import logging
 from datetime import datetime, timedelta, timezone
@@ -14,6 +13,7 @@ from ..schema.user import UserRegistration as UserSchema
 from ..schema.auth import Login, GenerateKey, JWT_KEY
 from ..memory.models import UserRegistration
 from .email import send_api_key_email
+from ..config.config import JWT_SECRET, JWT_EXPIRY_HOURS
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +25,11 @@ class AuthenticationService:
         self.username = username
 
     def create_jwt(self) -> str:
-        secret = os.getenv("JWT_SECRET", "change-me")
-        expiry = int(os.getenv("JWT_EXPIRY_HOURS", 24))
         payload = {
             "sub": self.username,
-            "exp": datetime.now(timezone.utc) + timedelta(hours=expiry),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS),
         }
-        return jwt.encode(
-            payload, secret,
-            algorithm="HS256"
-            )
+        return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
     async def register_user(self, user: UserSchema) -> dict:
         user.email_address = str(user.email_address)

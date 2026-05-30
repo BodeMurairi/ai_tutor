@@ -7,7 +7,7 @@ import os
 load_dotenv(Path("coding_tutor_agent/.env"), override=True)
 
 user = os.getenv("SMTP_USER")
-password = (os.getenv("SMTP_PASSWORD") or "").replace(" ", "")
+password = os.getenv("SMTP_PASSWORD") or ""
 
 print(f"User   : {user}")
 print(f"Pw len : {len(password)}")

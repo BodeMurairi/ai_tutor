@@ -3,7 +3,7 @@
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import UserModel, SessionModel
+from .models import UserModel, SessionModel, UserRegistration
 from ..schema.user import User
 from ..schema.session import Session
 
@@ -21,6 +21,14 @@ async def get_user_by_name(session: AsyncSession, name: str) -> UserModel | None
     """Get a user by their name"""
     result = await session.execute(
         select(UserModel).where(UserModel.name == name)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_registration_by_username(session: AsyncSession, username: str) -> UserRegistration | None:
+    """Get a registered user by their username"""
+    result = await session.execute(
+        select(UserRegistration).where(UserRegistration.username == username)
     )
     return result.scalar_one_or_none()
 
