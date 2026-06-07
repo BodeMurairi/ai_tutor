@@ -3,8 +3,8 @@
 import logging
 import threading
 from .memory.database import init_db_sync
-# from .pipeline.store import document_store, populate_store
-#from . import agent
+from .pipeline.store import document_store, populate_store
+from . import agent
 
 logger = logging.getLogger(__name__)
 
