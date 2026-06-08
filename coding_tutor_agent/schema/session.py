@@ -19,6 +19,7 @@ class Session(BaseModel):
     current_language: str = Field(..., description="Programming language being discussed")
     current_intent: Intent = Field(..., description="User's current intent")
     current_topic: str = Field(..., description="Topic being explored")
+    last_summary: Optional[str] = Field(default=None, description="Summary of the last conversation")
     started_at: datetime = Field(default_factory=datetime.now, description="Session start time")
 
 class ChatRequest(BaseModel):

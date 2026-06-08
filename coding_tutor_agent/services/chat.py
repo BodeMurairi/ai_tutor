@@ -37,6 +37,9 @@ async def _get_or_create_user_state(username: str) -> dict:
         "first_name": registration.first_name,
         "api_key": registration.api_key,
         "user_id": profile.id,
+        "last_summary": "",
+        "message_count": 0,
+        "should_summarize": False,
     }
 
 
@@ -61,13 +64,22 @@ async def handle_chat(request: ChatRequest, username: str) -> ChatResponse:
             state=state
         )
 
+    import logging
+    logger = logging.getLogger(__name__)
+
     response_text = ""
     async for event in runner.run_async(
         user_id=adk_user_id,
         session_id=session_id,
         new_message=Content(role="user", parts=[Part.from_text(text=request.message)])
     ):
+        logger.info(f"[event] is_final={event.is_final_response()} has_content={event.content is not None}")
         if event.is_final_response() and event.content and event.content.parts:
-            response_text = event.content.parts[0].text
+            text = "".join(
+                part.text for part in event.content.parts if hasattr(part, "text") and part.text
+            )
+            logger.info(f"[event] final response text length={len(text)}")
+            if text:
+                response_text = text
 
     return ChatResponse(response=response_text, session_id=session_id)

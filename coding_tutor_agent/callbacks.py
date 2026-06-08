@@ -32,6 +32,7 @@ async def before_agent_callback(callback_context: CallbackContext) -> types.Cont
                 callback_context.state["current_language"] = last_session.current_language
                 callback_context.state["current_intent"] = last_session.current_intent.value
                 callback_context.state["current_topic"] = last_session.current_topic
+                callback_context.state["last_summary"] = last_session.last_summary or ""
                 logger.info(f"[before_callback] Restored session context for user {user_id}")
     except Exception as e:
         logger.error(f"[before_callback] Failed to load session context: {e}")
@@ -50,6 +51,7 @@ async def after_agent_callback(callback_context: CallbackContext) -> types.Conte
     current_language = callback_context.state.get("current_language")
     current_intent = callback_context.state.get("current_intent")
     current_topic = callback_context.state.get("current_topic")
+    last_summary = callback_context.state.get("last_summary")
 
     logger.info(f"[callback] state → user_id={user_id}, username={username}, "
                 f"language={current_language}, intent={current_intent}, topic={current_topic}")
@@ -70,6 +72,10 @@ async def after_agent_callback(callback_context: CallbackContext) -> types.Conte
         logger.warning(f"[callback] Unknown intent '{current_intent}', defaulting to 'learning'.")
         intent = Intent.learning
 
+    message_count = callback_context.state.get("message_count", 0) + 1
+    callback_context.state["message_count"] = message_count
+    callback_context.state["should_summarize"] = (message_count % 5 == 0)
+
     try:
         async with AsyncSessionLocal() as db:
             result = await update_session(
@@ -77,7 +83,8 @@ async def after_agent_callback(callback_context: CallbackContext) -> types.Conte
                 session_id=session_id,
                 current_language=current_language,
                 current_intent=intent.value,
-                current_topic=current_topic
+                current_topic=current_topic,
+                last_summary=last_summary
             )
             if not result["status"]:
                 session_data = Session(
@@ -86,7 +93,8 @@ async def after_agent_callback(callback_context: CallbackContext) -> types.Conte
                     username=username,
                     current_language=current_language,
                     current_intent=intent,
-                    current_topic=current_topic
+                    current_topic=current_topic,
+                    last_summary=last_summary
                 )
                 await create_session(db, session_data)
                 logger.info(f"[callback] New session created → {session_id}")
