@@ -5,6 +5,17 @@ from ..memory.database import AsyncSessionLocal
 from ..memory.repository import get_registration_by_username, get_username
 from ..memory.models import UserModel
 
+async def summarize(summary: str, tool_context: ToolContext):
+    """
+    Save a summary of the current conversation to session state.
+    Call this tool after finishing a topic or at the end of the conversation.
+    Write 2-3 sentences covering what was taught, the concept discussed, and any key takeaways.
+    summarize conversation after 5 messages.
+    """
+    tool_context.state["last_summary"] = summary
+    return {
+        "conversation_summary":summary
+    }
 
 async def load_user(tool_context: ToolContext) -> dict:
     """

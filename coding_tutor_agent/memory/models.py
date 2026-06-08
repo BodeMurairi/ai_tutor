@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, Enum, JSON, ForeignKey
+from sqlalchemy import String, DateTime, Enum, JSON, ForeignKey, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from ..schema.user import SkillLevel
@@ -53,6 +53,7 @@ class SessionModel(Base):
     current_language: Mapped[str] = mapped_column(String, nullable=False)
     current_intent: Mapped[Intent] = mapped_column(Enum(Intent), nullable=False)
     current_topic: Mapped[str] = mapped_column(String, nullable=False)
+    last_summary: Mapped[str|None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     user: Mapped["UserModel"] = relationship("UserModel", back_populates="sessions")
