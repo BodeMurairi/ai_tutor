@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from fastapi import Depends, Request
+from fastapi import Request, Security
 from fastapi.routing import APIRouter
 
 from ..controllers.chat import chat
@@ -17,6 +17,6 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 async def chat_endpoint(
     request: Request,
     body: ChatRequest,
-    username: str = Depends(get_current_user)
+    username: str = Security(get_current_user),
 ):
     return await chat(request=body, username=username)

@@ -14,7 +14,7 @@ from .routers.chat import router as chat_router
 from .services.rate_limiter import limiter, rate_limit_exceeded_handler
 
 
-app = FastAPI()
+app = FastAPI(title="NexVecta AI Tutor")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
