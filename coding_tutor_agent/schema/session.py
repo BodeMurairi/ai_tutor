@@ -31,4 +31,3 @@ class ChatResponse(BaseModel):
     """Chat response"""
     response: str
     session_id: str
-

@@ -2,34 +2,23 @@
 
 import uuid
 import logging
-from datetime import datetime, timedelta, timezone
 
-import jwt
 from fastapi import HTTPException, status
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..schema.user import UserRegistration as UserSchema
-from ..schema.auth import Login, GenerateKey, JWT_KEY
+from ..schema.auth import GenerateKey
 from ..memory.models import UserRegistration
 from .email import send_api_key_email
-from ..config.config import JWT_SECRET, JWT_EXPIRY_HOURS
 
 logger = logging.getLogger(__name__)
 
 
 class AuthenticationService:
 
-    def __init__(self, session: AsyncSession, username: str = None):
+    def __init__(self, session: AsyncSession):
         self.session = session
-        self.username = username
-
-    def create_jwt(self) -> str:
-        payload = {
-            "sub": self.username,
-            "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS),
-        }
-        return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
     async def register_user(self, user: UserSchema) -> dict:
         user.email_address = str(user.email_address)
@@ -51,48 +40,17 @@ class AuthenticationService:
             "data": UserSchema.model_validate(new_user),
         }
 
-    async def login_user(self, credentials: Login) -> JWT_KEY:
-        conditions = []
-        if credentials.username:
-            conditions.append(UserRegistration.username == credentials.username)
-        if credentials.email_address:
-            conditions.append(UserRegistration.email_address == credentials.email_address)
-
-        if not conditions:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Provide a username or email address",
+    async def reset_api_key(self, data) -> dict:
+        result = await self.session.execute(
+            select(UserRegistration).where(
+                UserRegistration.username == data.username,
+                UserRegistration.email_address == data.email_address,
             )
-
-        stmt = select(UserRegistration).where(or_(*conditions))
-        result = await self.session.execute(stmt)
-        user = result.scalar_one_or_none()
-
-        if not user or user.api_key != credentials.api_key:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
-            )
-
-        self.username = user.username
-        return JWT_KEY(
-            username=self.username,
-            jwt=self.create_jwt()
-            )
-
-    async def reset_api_key(self, data: GenerateKey) -> dict:
-        stmt = select(UserRegistration).where(
-            UserRegistration.username == data.username,
-            UserRegistration.email_address == data.email_address,
         )
-        result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         new_key = f"pkey-{uuid.uuid4()}"
         user.api_key = new_key
@@ -104,7 +62,4 @@ class AuthenticationService:
         except Exception as e:
             logger.warning("Failed to send new API key email to %s: %s", user.email_address, e)
 
-        return {
-            "status": "success",
-            "api_key": new_key
-            }
+        return {"status": "success", "api_key": new_key}
