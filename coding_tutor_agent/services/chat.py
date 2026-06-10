@@ -3,17 +3,19 @@
 from uuid import uuid4
 from google.genai.types import Content, Part
 
+import logging
 from ..adk_runner import runner, session_service, APP_NAME
 from ..memory.database import AsyncSessionLocal
 from ..memory.repository import get_registration_by_username, get_username
 from ..memory.models import UserModel
 from ..schema.session import ChatRequest, ChatResponse
 
+logger = logging.getLogger(__name__)
 
 async def _get_or_create_user_state(username: str) -> dict:
     """
     Load user data from DB and return as session state dict.
-    Creates a UserModel profile if one doesn't exist yet.
+    Creates a UserModel profile if one does not exist yet.
     Returns the state dict and the real user_id for ADK.
     """
     async with AsyncSessionLocal() as db:
@@ -63,9 +65,6 @@ async def handle_chat(request: ChatRequest, username: str) -> ChatResponse:
             session_id=session_id,
             state=state
         )
-
-    import logging
-    logger = logging.getLogger(__name__)
 
     response_text = ""
     async for event in runner.run_async(
